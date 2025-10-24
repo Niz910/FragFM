@@ -1,0 +1,11 @@
+[Thu Oct 23 15:15:00 EDT 2025] ✅ Environment setup
+Python executable: /sw/pkgs/arc/python/3.10.4/bin/python
+PYTHONPATH: /nfs/turbo/umms-drjieliu/usr/kerryliu/proj_wjk/casanovo:/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages:
+sys.path = ['', '/nfs/turbo/umms-drjieliu/usr/kerryliu/proj_wjk/casanovo', '/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages']
+✅ numpy 1.26.4
+✅ torch 2.8.0+cu128
+✅ pytorch_lightning 2.5.5
+✅ lightning 2.5.5
+[Thu Oct 23 15:15:17 EDT 2025] Starting SSL training...
+🚀 Starting SSL training on /nfs/turbo/umms-drjieliu/usr/kerryliu/proj_wjk/casanovo/sample_data/bacillus.10k.fixed.mgf
+Training: |          | 0/? [00:00<?, ?it/s]Training: |          | 0/? [00:00<?, ?it/s]Epoch 0: |          | 0/? [00:00<?, ?it/s] Epoch 0: |          | 0/? [00:01<?, ?it/s][Thu Oct 23 15:15:48 EDT 2025] ✅ Training completed.

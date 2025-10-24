@@ -1,0 +1,77 @@
+/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/lightning_fabric/plugins/environments/slurm.py:204: The `srun` command is available on your system but is not used. HINT: If your intention is to run Lightning on SLURM, prepend your python command with `srun` like so: srun python train_ssl_mgf.py ...
+Using 16bit Automatic Mixed Precision (AMP)
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+bacillus.10k.fixed.mgf: 0 spectra [00:00, ? spectra/s]bacillus.10k.fixed.mgf: 169 spectra [00:00, 1682.65 spectra/s]bacillus.10k.fixed.mgf: 338 spectra [00:00, 1672.76 spectra/s]bacillus.10k.fixed.mgf: 506 spectra [00:00, 1642.83 spectra/s]bacillus.10k.fixed.mgf: 671 spectra [00:00, 1596.49 spectra/s]bacillus.10k.fixed.mgf: 831 spectra [00:00, 1556.60 spectra/s]bacillus.10k.fixed.mgf: 987 spectra [00:00, 1530.16 spectra/s]bacillus.10k.fixed.mgf: 1177 spectra [00:00, 1643.46 spectra/s]bacillus.10k.fixed.mgf: 1346 spectra [00:00, 1655.11 spectra/s]bacillus.10k.fixed.mgf: 1512 spectra [00:00, 1644.32 spectra/s]bacillus.10k.fixed.mgf: 1677 spectra [00:01, 1624.92 spectra/s]bacillus.10k.fixed.mgf: 1840 spectra [00:01, 1586.72 spectra/s]bacillus.10k.fixed.mgf: 2029 spectra [00:01, 1674.87 spectra/s]bacillus.10k.fixed.mgf: 2203 spectra [00:01, 1691.83 spectra/s]bacillus.10k.fixed.mgf: 2373 spectra [00:01, 1674.33 spectra/s]bacillus.10k.fixed.mgf: 2541 spectra [00:01, 1655.24 spectra/s]bacillus.10k.fixed.mgf: 2707 spectra [00:01, 1652.09 spectra/s]bacillus.10k.fixed.mgf: 2883 spectra [00:01, 1683.64 spectra/s]bacillus.10k.fixed.mgf: 3052 spectra [00:01, 1680.85 spectra/s]bacillus.10k.fixed.mgf: 3221 spectra [00:01, 1648.87 spectra/s]bacillus.10k.fixed.mgf: 3387 spectra [00:02, 1598.95 spectra/s]bacillus.10k.fixed.mgf: 3548 spectra [00:02, 1599.92 spectra/s]bacillus.10k.fixed.mgf: 3730 spectra [00:02, 1662.80 spectra/s]bacillus.10k.fixed.mgf: 3898 spectra [00:02, 1667.04 spectra/s]bacillus.10k.fixed.mgf: 4065 spectra [00:02, 1649.62 spectra/s]bacillus.10k.fixed.mgf: 4231 spectra [00:02, 1617.55 spectra/s]bacillus.10k.fixed.mgf: 4400 spectra [00:02, 1636.82 spectra/s]bacillus.10k.fixed.mgf: 4574 spectra [00:02, 1666.25 spectra/s]bacillus.10k.fixed.mgf: 4743 spectra [00:02, 1670.50 spectra/s]bacillus.10k.fixed.mgf: 4911 spectra [00:02, 1642.55 spectra/s]bacillus.10k.fixed.mgf: 5076 spectra [00:03, 1586.03 spectra/s]bacillus.10k.fixed.mgf: 5249 spectra [00:03, 1625.68 spectra/s]bacillus.10k.fixed.mgf: 5423 spectra [00:03, 1656.37 spectra/s]bacillus.10k.fixed.mgf: 5590 spectra [00:03, 1653.45 spectra/s]bacillus.10k.fixed.mgf: 5756 spectra [00:03, 1620.15 spectra/s]bacillus.10k.fixed.mgf: 5919 spectra [00:03, 1578.16 spectra/s]bacillus.10k.fixed.mgf: 6101 spectra [00:03, 1645.46 spectra/s]bacillus.10k.fixed.mgf: 6271 spectra [00:03, 1660.57 spectra/s]bacillus.10k.fixed.mgf: 6438 spectra [00:03, 1653.93 spectra/s]bacillus.10k.fixed.mgf: 6604 spectra [00:04, 1620.07 spectra/s]bacillus.10k.fixed.mgf: 6767 spectra [00:04, 1588.36 spectra/s]bacillus.10k.fixed.mgf: 6958 spectra [00:04, 1680.82 spectra/s]bacillus.10k.fixed.mgf: 7131 spectra [00:04, 1692.94 spectra/s]bacillus.10k.fixed.mgf: 7301 spectra [00:04, 1677.18 spectra/s]bacillus.10k.fixed.mgf: 7469 spectra [00:04, 1636.69 spectra/s]bacillus.10k.fixed.mgf: 7634 spectra [00:04, 1601.92 spectra/s]bacillus.10k.fixed.mgf: 7795 spectra [00:04, 1603.02 spectra/s]bacillus.10k.fixed.mgf: 7959 spectra [00:04, 1613.02 spectra/s]bacillus.10k.fixed.mgf: 8121 spectra [00:04, 1594.13 spectra/s]bacillus.10k.fixed.mgf: 8296 spectra [00:05, 1639.46 spectra/s]bacillus.10k.fixed.mgf: 8462 spectra [00:05, 1643.30 spectra/s]bacillus.10k.fixed.mgf: 8627 spectra [00:05, 1635.18 spectra/s]bacillus.10k.fixed.mgf: 8796 spectra [00:05, 1650.10 spectra/s]bacillus.10k.fixed.mgf: 8962 spectra [00:05, 1618.65 spectra/s]bacillus.10k.fixed.mgf: 9135 spectra [00:05, 1648.02 spectra/s]bacillus.10k.fixed.mgf: 9300 spectra [00:05, 1634.98 spectra/s]bacillus.10k.fixed.mgf: 9464 spectra [00:05, 1610.22 spectra/s]bacillus.10k.fixed.mgf: 9633 spectra [00:05, 1631.38 spectra/s]bacillus.10k.fixed.mgf: 9797 spectra [00:05, 1599.76 spectra/s]bacillus.10k.fixed.mgf: 9804 spectra [00:05, 1634.16 spectra/s]
+/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/depthcharge/data/parsers.py:227: UserWarning: Skipped 7 spectra with invalid information.Last error was: 
+ Insufficient number of peaks
+  warnings.warn(
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/utilities/model_summary/model_summary.py:231: Precision 16-mixed is not supported by the model summary.  Estimated model size in MB will not be accurate. Using 32 bits instead.
+
+  | Name     | Type             | Params | Mode 
+------------------------------------------------------
+0 | encoder  | SpectrumEncoder  | 13.1 M | train
+1 | mlp_head | Sequential       | 295 K  | train
+2 | loss_fn  | CrossEntropyLoss | 0      | train
+------------------------------------------------------
+13.4 M    Trainable params
+0         Non-trainable params
+13.4 M    Total params
+53.748    Total estimated model params size (MB)
+72        Modules in train mode
+0         Modules in eval mode
+/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/data_connector.py:433: The 'train_dataloader' does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` to `num_workers=3` in the `DataLoader` to improve performance.
+Traceback (most recent call last):
+  File "/nfs/turbo/umms-drjieliu/usr/kerryliu/proj_wjk/casanovo/Test_self/train_ssl_mgf.py", line 128, in <module>
+    main()
+  File "/nfs/turbo/umms-drjieliu/usr/kerryliu/proj_wjk/casanovo/Test_self/train_ssl_mgf.py", line 123, in main
+    trainer.fit(model, datamodule=dm)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 560, in fit
+    call._call_and_handle_interrupt(
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 49, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 598, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1011, in _run
+    results = self._run_stage()
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1055, in _run_stage
+    self.fit_loop.run()
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/fit_loop.py", line 216, in run
+    self.advance()
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/fit_loop.py", line 458, in advance
+    self.epoch_loop.run(self._data_fetcher)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 152, in run
+    self.advance(data_fetcher)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/training_epoch_loop.py", line 348, in advance
+    batch_output = self.automatic_optimization.run(trainer.optimizers[0], batch_idx, kwargs)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 192, in run
+    self._optimizer_step(batch_idx, closure)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 270, in _optimizer_step
+    call._call_lightning_module_hook(
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 177, in _call_lightning_module_hook
+    output = fn(*args, **kwargs)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/core/module.py", line 1366, in optimizer_step
+    optimizer.step(closure=optimizer_closure)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/core/optimizer.py", line 154, in step
+    step_output = self._strategy.optimizer_step(self._optimizer, closure, **kwargs)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/strategies/strategy.py", line 239, in optimizer_step
+    return self.precision_plugin.optimizer_step(optimizer, model=model, closure=closure, **kwargs)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/plugins/precision/amp.py", line 79, in optimizer_step
+    closure_result = closure()
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 146, in __call__
+    self._result = self.closure(*args, **kwargs)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 131, in closure
+    step_output = self._step_fn()
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/loops/optimization/automatic.py", line 319, in _training_step
+    training_step_output = call._call_strategy_hook(trainer, "training_step", *kwargs.values())
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 329, in _call_strategy_hook
+    output = fn(*args, **kwargs)
+  File "/home/kerryliu/.conda/envs/casanovo_env/lib/python3.10/site-packages/pytorch_lightning/strategies/strategy.py", line 391, in training_step
+    return self.lightning_module.training_step(*args, **kwargs)
+  File "/nfs/turbo/umms-drjieliu/usr/kerryliu/proj_wjk/casanovo/casanovo/denovo/model_ssl.py", line 102, in training_step
+    masked_logits = logits[mask]                                 # (N_masked, n_bins)
+IndexError: The shape of the mask [30, 200] at index 1 does not match the shape of the indexed tensor [30, 201, 64] at index 1
