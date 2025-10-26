@@ -26,7 +26,7 @@ class SpectrumSSL(pl.LightningModule):
         lr: float = 1e-4,
         #n_bins: int = 64,
         min_mask: float = 0.05,
-        max_mask: float = 0.5,
+        max_mask: float = 0.05,
         total_epochs: int = 100,
         use_cosine_mask_schedule: bool = False,
         mz_min: float = 100.0,
@@ -49,7 +49,7 @@ class SpectrumSSL(pl.LightningModule):
         self.MASK_TOKEN = -1.0
         
         # 设置bin相关参数
-        self.bin_size = 0.1  # 固定bin大小为0.1
+        self.bin_size = 0.5  # 固定bin大小为0.1
         self.n_bins = int((self.mz_max - self.mz_min) / self.bin_size)  # 根据mz范围和bin大小计算bin数量
         
         # 损失函数
@@ -98,7 +98,7 @@ class SpectrumSSL(pl.LightningModule):
         # Use a fixed bin width instead of dynamic scaling between mz_min/mz_max.
         # Minimal change: choose a fixed interval (example: 0.1) and compute bin index
         # as floor((mz - mz_min) / bin_width). Clamp to [0, n_bins-1].
-        bin_width = 0.1
+        bin_width = 0.5
 
         # Ensure we do not produce negative bins for values < mz_min by clamping
         clamped = torch.clamp(mzs, min=self.mz_min)

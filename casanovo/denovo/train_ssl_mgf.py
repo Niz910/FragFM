@@ -21,7 +21,7 @@ def main():
 
     batch_size = 30
     max_epochs = 30
-    n_bins = 64
+    #n_bins = 64  # 不再使用固定的n_bins，现在在模型中根据mz范围动态计算
     dim_model = 512
     n_head = 8
     n_layers = 6
@@ -47,7 +47,7 @@ def main():
     max_peaks=200,
     min_peaks=20,
     shuffle=True,
-    n_workers=0,
+    n_workers=8,  # 增加worker数量以提高数据加载性能
 )
     #  防报错
     def val_dataloader(self):
@@ -65,7 +65,7 @@ def main():
         dim_feedforward=1024,
         dropout=0.1,
         lr=lr,
-        n_bins=n_bins,
+        #n_bins=n_bins,
         min_mask=0.05,
         max_mask=0.05,
         total_epochs=max_epochs,
@@ -103,7 +103,8 @@ def main():
     # Trainer
     # =====================================================
     use_gpu = torch.cuda.is_available()
-    accelerator = "gpu" if use_gpu else "cpu"
+    print(use_gpu)
+    accelerator = "cuda" if use_gpu else "cpu"
     devices = 1 if use_gpu else None
     precision = "16-mixed" if use_gpu else "32-true"
 
