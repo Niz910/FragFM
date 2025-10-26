@@ -4,6 +4,9 @@ import torch.nn as nn
 import pytorch_lightning as pl #import lightning.pytorch as pl
 import torch.nn.functional as F
 from casanovo.denovo.transformers import SpectrumEncoder
+import matplotlib.pyplot as plt
+import os
+from typing import List, Dict
 # 改预测目标 改成m/z 删掉余弦 
 # 读DreaMS/casanovo encoder
 class SpectrumSSL(pl.LightningModule):
@@ -21,7 +24,7 @@ class SpectrumSSL(pl.LightningModule):
         dim_feedforward: int = 1024,
         dropout: float = 0.1,
         lr: float = 1e-4,
-        n_bins: int = 64,
+        #n_bins: int = 64,
         min_mask: float = 0.05,
         max_mask: float = 0.5,
         total_epochs: int = 100,
@@ -32,6 +35,25 @@ class SpectrumSSL(pl.LightningModule):
     ):
         super().__init__()
         self.save_hyperparameters()
+        
+        # Initialize lists to store losses for plotting
+        self.train_losses: List[float] = []
+        self.val_losses: List[float] = []
+        self.current_epoch_losses: List[float] = []
+
+        # 基本参数初始化
+        self.lr = lr
+        self.mz_min = mz_min
+        self.mz_max = mz_max
+        self.log_scale = log_scale
+        self.MASK_TOKEN = -1.0
+        
+        # 设置bin相关参数
+        self.bin_size = 0.1  # 固定bin大小为0.1
+        self.n_bins = int((self.mz_max - self.mz_min) / self.bin_size)  # 根据mz范围和bin大小计算bin数量
+        
+        # 损失函数
+        self.loss_fn = nn.CrossEntropyLoss()  # 这里有softmax层所以训练阶段就不用了
 
         self.encoder = SpectrumEncoder(
             d_model=dim_model,
@@ -44,16 +66,8 @@ class SpectrumSSL(pl.LightningModule):
         self.mlp_head = nn.Sequential(
             nn.Linear(dim_model, dim_model),
             nn.ReLU(),
-            nn.Linear(dim_model, n_bins),
+            nn.Linear(dim_model, self.n_bins),  # 使用self.n_bins而不是n_bins
         )
-
-        self.lr = lr
-        self.n_bins = n_bins
-        self.loss_fn = nn.CrossEntropyLoss()# 这里有softmax层所以训练阶段就不用了
-        self.mz_min = mz_min
-        self.mz_max = mz_max
-        self.log_scale = log_scale
-        self.MASK_TOKEN = -1.0
 
     # Mask rate scheduler
     def current_mask_rate(self):
@@ -80,17 +94,18 @@ class SpectrumSSL(pl.LightningModule):
         valid_mask = mzs > 0
         if not valid_mask.any():
             return torch.zeros_like(mzs, dtype=torch.long)
-        
-        if self.log_scale:
-            a, b = math.log(self.mz_min), math.log(self.mz_max)
-            t = (torch.log(torch.clamp(mzs, self.mz_min, self.mz_max)) - a) / (b - a)
-        else:
-            t = (torch.clamp(mzs, self.mz_min, self.mz_max) - self.mz_min) / (self.mz_max - self.mz_min)
-        
-        t = torch.clamp(t, 0.0, 1.0)
-        bins = torch.minimum((t * self.n_bins).long(), torch.tensor(self.n_bins - 1))
-        
-        # 对于无效位置（m/z <= 0），设置为0
+
+        # Use a fixed bin width instead of dynamic scaling between mz_min/mz_max.
+        # Minimal change: choose a fixed interval (example: 0.1) and compute bin index
+        # as floor((mz - mz_min) / bin_width). Clamp to [0, n_bins-1].
+        bin_width = 0.1
+
+        # Ensure we do not produce negative bins for values < mz_min by clamping
+        clamped = torch.clamp(mzs, min=self.mz_min)
+        bins = torch.floor((clamped - self.mz_min) / bin_width).long()
+
+        # Clamp to valid range and set invalid positions to 0
+        bins = torch.clamp(bins, min=0, max=self.n_bins - 1)
         bins[~valid_mask] = 0
         return bins.detach()
 
@@ -141,8 +156,8 @@ class SpectrumSSL(pl.LightningModule):
     def training_step(self, batch, _):
         mzs = batch["mz_array"]
         intensities = batch["intensity_array"]
-        mask_rate = self.current_mask_rate()
-
+        #mask_rate = self.current_mask_rate()
+        mask_rate = 0.05
         labels = self.bin_mz(mzs)
         masked_mzs, mask = self.mask_spectrum(mzs, intensities, mask_rate)
 
@@ -180,7 +195,8 @@ class SpectrumSSL(pl.LightningModule):
     # Validation step
     def validation_step(self, batch, _):
         mzs, intensities = batch["mz_array"], batch["intensity_array"]
-        mask_rate = self.current_mask_rate()
+        #mask_rate = self.current_mask_rate()
+        mask_rate = 0.05
 
         labels = self.bin_mz(mzs)
         masked_mzs, mask = self.mask_spectrum(mzs, intensities, mask_rate) # mask
@@ -204,11 +220,42 @@ class SpectrumSSL(pl.LightningModule):
 
     # Epoch-end logging
     def on_train_epoch_end(self):
-        mask_rate = self.current_mask_rate()
+        #mask_rate = self.current_mask_rate()
+        mask_rate = 0.05
         avg_loss = self.trainer.callback_metrics.get("train_loss", None)
         if avg_loss is not None:
             avg_loss = avg_loss.item()
+            self.train_losses.append(avg_loss)
+        
+        val_loss = self.trainer.callback_metrics.get("val_loss", None)
+        if val_loss is not None:
+            val_loss = val_loss.item()
+            self.val_losses.append(val_loss)
+            
         self.print(f"Epoch {self.current_epoch}: mask_rate={mask_rate:.2f}, train_loss={avg_loss:.4f}")
+        
+        # Plot and save loss curves every epoch
+        self.plot_loss_curves()
+    
+    def plot_loss_curves(self):
+        """Plot and save training and validation loss curves."""
+        plt.figure(figsize=(10, 6))
+        epochs = range(1, len(self.train_losses) + 1)
+        
+        plt.plot(epochs, self.train_losses, 'b-', label='Training Loss')
+        if self.val_losses:  # Plot validation loss if available
+            plt.plot(epochs, self.val_losses, 'r-', label='Validation Loss')
+        
+        plt.title('Loss Curves During Training')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.grid(True)
+        
+        # Create logs directory if it doesn't exist
+        os.makedirs('logs', exist_ok=True)
+        plt.savefig(os.path.join('logs', 'loss_curves.png'))
+        plt.close()
 
     # Optimizer
     def configure_optimizers(self):

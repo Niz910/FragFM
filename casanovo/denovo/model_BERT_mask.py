@@ -4,8 +4,10 @@ import logging
 import warnings
 from typing import Any, Dict, List, Optional, Tuple
 
-import lightning.pytorch as pl
+import pytorch_lightning as pl
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -137,6 +139,9 @@ class MSEncoder(pl.LightningModule):
         # Logging.
         self.n_log = n_log
         self._history = []
+        # Lists for plotting loss curves
+        self._plot_train_losses = []
+        self._plot_val_losses = []
 
     @property
     def device(self) -> torch.device:
@@ -316,7 +321,7 @@ class MSEncoder(pl.LightningModule):
 
     def _mz_to_bins(self, mzs: torch.Tensor) -> torch.Tensor:
         """
-        Convert m/z values to bin indices for classification.
+        Convert m/z values to bin indices using fixed bin width.
         
         Parameters
         ----------
@@ -328,15 +333,18 @@ class MSEncoder(pl.LightningModule):
         bins : torch.Tensor of shape (batch_size, max_peaks)
             Bin indices for each m/z value. -1 for invalid/out-of-range values.
         """
-        # Clip m/z values to valid range
-        mzs_clipped = torch.clamp(mzs, 0, self.max_mz)
+        # Use fixed bin width
+        bin_width = 0.1
         
-        # Convert to bin indices
-        bins = torch.floor(mzs_clipped / self.bin_size).long()
+        # Convert to bin indices using fixed width
+        bins = torch.floor(mzs / bin_width).long()
         
-        # Set invalid positions (mzs <= 0) to -1
-        invalid_mask = mzs <= 0
+        # Handle invalid values
+        invalid_mask = (mzs <= 0) | (mzs > self.max_mz)
         bins[invalid_mask] = -1
+        
+        # Ensure we don't exceed n_bins
+        bins = torch.clamp(bins, min=-1, max=self.n_bins - 1)
         
         return bins
 
@@ -434,6 +442,17 @@ class MSEncoder(pl.LightningModule):
         # Predict m/z values (regression)
         predicted_mz = self.mz_predictor(memories).squeeze(-1)
         
+        # Handle dimension mismatch if it occurs
+        min_len = min(predicted_mz.size(1), mzs.size(1))
+        if predicted_mz.size(1) != mzs.size(1):
+            predicted_mz = predicted_mz[:, :min_len]
+            mzs = mzs[:, :min_len]
+            intensities = intensities[:, :min_len]
+            mask_tokens = mask_tokens[:, :min_len]
+            random_tokens = random_tokens[:, :min_len]
+            original_tokens = original_tokens[:, :min_len]
+            memories = memories[:, :min_len]
+            
         # Predict m/z bins (classification)
         predicted_bins = self.mz_classifier(memories)
         
@@ -461,27 +480,42 @@ class MSEncoder(pl.LightningModule):
         self.log(
             f"{mode}_MSE_Loss",
             regression_loss.detach(),
-            on_step=False,
+            on_step=True,  # 改为每步都记录
             on_epoch=True,
             sync_dist=True,
             batch_size=mzs.shape[0],
+            prog_bar=True,  # 在进度条显示
         )
         self.log(
             f"{mode}_CE_Loss",
             classification_loss.detach(),
-            on_step=False,
+            on_step=True,  # 改为每步都记录
             on_epoch=True,
             sync_dist=True,
             batch_size=mzs.shape[0],
+            prog_bar=True,  # 在进度条显示
         )
         self.log(
             f"{mode}_Total_Loss",
             total_loss.detach(),
-            on_step=False,
+            on_step=True,  # 改为每步都记录
             on_epoch=True,
             sync_dist=True,
             batch_size=mzs.shape[0],
+            prog_bar=True,  # 在进度条显示
         )
+
+        # Also log a generic train_loss key so external training scripts
+        # that monitor "train_loss" (like train_ssl_mgf.py) will find it.
+        if mode == "train":
+            self.log(
+                "train_loss",
+                total_loss.detach(),
+                on_step=False,
+                on_epoch=True,
+                sync_dist=True,
+                batch_size=mzs.shape[0],
+            )
         
         # Log masking statistics
         mask_ratio = mask_tokens.float().mean()
@@ -545,6 +579,17 @@ class MSEncoder(pl.LightningModule):
         # Predict m/z values (regression)
         predicted_mz = self.mz_predictor(memories).squeeze(-1)
         
+        # Handle dimension mismatch if it occurs
+        min_len = min(predicted_mz.size(1), mzs.size(1))
+        if predicted_mz.size(1) != mzs.size(1):
+            predicted_mz = predicted_mz[:, :min_len]
+            mzs = mzs[:, :min_len]
+            intensities = intensities[:, :min_len]
+            mask_tokens = mask_tokens[:, :min_len]
+            random_tokens = random_tokens[:, :min_len]
+            original_tokens = original_tokens[:, :min_len]
+            memories = memories[:, :min_len]
+            
         # Predict m/z bins (classification)
         predicted_bins = self.mz_classifier(memories)
         
@@ -601,6 +646,15 @@ class MSEncoder(pl.LightningModule):
             sync_dist=True,
             batch_size=mzs.shape[0],
         )
+        # Also log a generic val_loss key to match common training scripts
+        self.log(
+            "val_loss",
+            total_loss.detach(),
+            on_step=False,
+            on_epoch=True,
+            sync_dist=True,
+            batch_size=mzs.shape[0],
+        )
         self.log(
             "valid_Accuracy",
             accuracy.detach(),
@@ -644,15 +698,22 @@ class MSEncoder(pl.LightningModule):
 
     def on_train_epoch_end(self) -> None:
         """
-        Log the training loss at the end of each epoch.
+        Log the training metrics at the end of each epoch.
         """
         callback_metrics = self.trainer.callback_metrics
-        train_loss = callback_metrics.get("train_Total_Loss", torch.tensor(np.nan)).detach().item()
-        train_mse = callback_metrics.get("train_MSE_Loss", torch.tensor(np.nan)).detach().item()
-        train_ce = callback_metrics.get("train_CE_Loss", torch.tensor(np.nan)).detach().item()
+        train_loss = callback_metrics.get("train_Total_Loss_epoch", torch.tensor(np.nan)).detach().item()
+        train_mse = callback_metrics.get("train_MSE_Loss_epoch", torch.tensor(np.nan)).detach().item()
+        train_ce = callback_metrics.get("train_CE_Loss_epoch", torch.tensor(np.nan)).detach().item()
         mask_ratio = callback_metrics.get("train_Mask_Ratio", torch.tensor(np.nan)).detach().item()
         random_ratio = callback_metrics.get("train_Random_Ratio", torch.tensor(np.nan)).detach().item()
         original_ratio = callback_metrics.get("train_Original_Ratio", torch.tensor(np.nan)).detach().item()
+        
+        # 每个epoch结束时打印详细信息
+        print(f"\nEpoch {self.current_epoch} Summary:")
+        print(f"  Training Loss: {train_loss:.4f}")
+        print(f"  MSE Loss: {train_mse:.4f}")
+        print(f"  CE Loss: {train_ce:.4f}")
+        print(f"  Mask/Random/Original Ratios: {mask_ratio:.2%}/{random_ratio:.2%}/{original_ratio:.2%}")
         
         metrics = {
             "step": self.trainer.global_step, 
@@ -664,7 +725,17 @@ class MSEncoder(pl.LightningModule):
             "original_ratio": original_ratio
         }
         self._history.append(metrics)
+        # Record train loss for plotting (may be nan)
+        try:
+            self._plot_train_losses.append(metrics.get("train_total", float('nan')))
+        except Exception:
+            self._plot_train_losses.append(float('nan'))
         self._log_history()
+        # Update plots
+        try:
+            self._plot_loss_curves()
+        except Exception as e:
+            logger.warning(f"Failed to plot train loss curves: {e}")
 
     def on_validation_epoch_end(self) -> None:
         """
@@ -684,7 +755,17 @@ class MSEncoder(pl.LightningModule):
             "valid_acc": valid_acc
         }
         self._history.append(metrics)
+        # Record val loss for plotting
+        try:
+            self._plot_val_losses.append(metrics.get("valid_total", float('nan')))
+        except Exception:
+            self._plot_val_losses.append(float('nan'))
         self._log_history()
+        # Update plots
+        try:
+            self._plot_loss_curves()
+        except Exception as e:
+            logger.warning(f"Failed to plot val loss curves: {e}")
 
     def _log_history(self) -> None:
         """
@@ -714,6 +795,35 @@ class MSEncoder(pl.LightningModule):
             ]
             logger.info(msg, *vals)
 
+    def _plot_loss_curves(self) -> None:
+        """Plot and save training and validation loss curves to logs/loss_curves_mse.png."""
+        try:
+            # If no data yet, skip
+            if len(self._plot_train_losses) == 0 and len(self._plot_val_losses) == 0:
+                return
+
+            plt.figure(figsize=(10, 6))
+            epochs = range(1, len(self._plot_train_losses) + 1)
+            if len(self._plot_train_losses) > 0:
+                plt.plot(epochs, self._plot_train_losses, 'b-', label='Train Total Loss')
+
+            if len(self._plot_val_losses) > 0:
+                # Align val plot to its own length in case val and train counts differ
+                v_epochs = range(1, len(self._plot_val_losses) + 1)
+                plt.plot(v_epochs, self._plot_val_losses, 'r-', label='Valid Total Loss')
+
+            plt.title('Loss Curves (MSE Encoder)')
+            plt.xlabel('Epoch')
+            plt.ylabel('Loss')
+            plt.legend()
+            plt.grid(True)
+
+            os.makedirs('logs', exist_ok=True)
+            plt.savefig(os.path.join('logs', 'loss_curves_mse.png'))
+            plt.close()
+        except Exception as e:
+            logger.warning(f"Failed to create loss curve plot: {e}")
+
     def configure_optimizers(
         self,
     ) -> Tuple[List[torch.optim.Optimizer], Dict[str, Any]]:
@@ -728,12 +838,25 @@ class MSEncoder(pl.LightningModule):
             The initialized Adam optimizer and its learning rate
             scheduler.
         """
-        optimizer = torch.optim.Adam(self.parameters(), **self.opt_kwargs)
+        # Filter out non-optimizer kwargs to only pass valid Adam parameters
+        valid_opt_kwargs = {
+            k: v for k, v in self.opt_kwargs.items() 
+            if k in ['lr', 'betas', 'eps', 'weight_decay', 'amsgrad']
+        }
+        optimizer = torch.optim.Adam(self.parameters(), **valid_opt_kwargs)
         # Apply learning rate scheduler per step.
         lr_scheduler = CosineWarmupScheduler(
             optimizer, self.warmup_iters, self.cosine_schedule_period_iters
         )
-        return [optimizer], {"scheduler": lr_scheduler, "interval": "step"}
+        # Configure scheduler to be called after optimizer step
+        scheduler_config = {
+            "scheduler": lr_scheduler,
+            "interval": "step",
+            "frequency": 1,
+            "monitor": "train_loss",
+            "strict": False,  # don't fail if metric not found
+        }
+        return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
 
 
 class CosineWarmupScheduler(torch.optim.lr_scheduler._LRScheduler):
@@ -774,3 +897,8 @@ class CosineWarmupScheduler(torch.optim.lr_scheduler._LRScheduler):
         if epoch <= self.warmup_iters:
             lr_factor *= epoch / self.warmup_iters
         return lr_factor
+
+
+# Backwards-compatible alias: allow importing SpectrumSSL from this module
+# if another training script expects that class name.
+SpectrumSSL = MSEncoder
