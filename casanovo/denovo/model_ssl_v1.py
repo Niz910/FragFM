@@ -47,9 +47,10 @@ class SpectrumSSL(pl.LightningModule):
         self.mz_max = mz_max
         self.log_scale = log_scale
         self.MASK_TOKEN = -1.0
+        self.total_epochs = total_epochs
         
         # 设置bin相关参数
-        self.bin_size = 0.5  # 固定bin大小为0.1
+        self.bin_size = 0.5  # 固定bin大小为0.5
         self.n_bins = int((self.mz_max - self.mz_min) / self.bin_size)  # 根据mz范围和bin大小计算bin数量
         
         # 损失函数
@@ -156,8 +157,7 @@ class SpectrumSSL(pl.LightningModule):
     def training_step(self, batch, _):
         mzs = batch["mz_array"]
         intensities = batch["intensity_array"]
-        #mask_rate = self.current_mask_rate()
-        mask_rate = 0.05
+        mask_rate = 0.05  # 使用固定的mask rate
         labels = self.bin_mz(mzs)
         masked_mzs, mask = self.mask_spectrum(mzs, intensities, mask_rate)
 
@@ -195,8 +195,7 @@ class SpectrumSSL(pl.LightningModule):
     # Validation step
     def validation_step(self, batch, _):
         mzs, intensities = batch["mz_array"], batch["intensity_array"]
-        #mask_rate = self.current_mask_rate()
-        mask_rate = 0.05
+        mask_rate = 0.05  # 使用固定的mask rate
 
         labels = self.bin_mz(mzs)
         masked_mzs, mask = self.mask_spectrum(mzs, intensities, mask_rate) # mask
@@ -220,8 +219,7 @@ class SpectrumSSL(pl.LightningModule):
 
     # Epoch-end logging
     def on_train_epoch_end(self):
-        #mask_rate = self.current_mask_rate()
-        mask_rate = 0.05
+        mask_rate = 0.05  # 使用固定的mask rate
         avg_loss = self.trainer.callback_metrics.get("train_loss", None)
         if avg_loss is not None:
             avg_loss = avg_loss.item()
@@ -259,4 +257,22 @@ class SpectrumSSL(pl.LightningModule):
 
     # Optimizer
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        
+        # 创建学习率调度器
+        scheduler = {
+            'scheduler': torch.optim.lr_scheduler.OneCycleLR(
+                optimizer,
+                max_lr=self.lr,
+                total_steps=self.total_epochs,
+                pct_start=0.3,  # 预热阶段占总步数的30%
+                cycle_momentum=False
+            ),
+            'interval': 'epoch',  # 每个epoch更新一次
+            'name': 'learning_rate'
+        }
+        
+        return {
+            'optimizer': optimizer,
+            'lr_scheduler': scheduler,
+        }

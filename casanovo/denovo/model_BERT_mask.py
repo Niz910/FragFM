@@ -142,6 +142,8 @@ class MSEncoder(pl.LightningModule):
         # Lists for plotting loss curves
         self._plot_train_losses = []
         self._plot_val_losses = []
+        self._plot_train_ce_losses = []  # Track CE loss separately
+        self._plot_train_mse_losses = []  # Track MSE loss separately
 
     @property
     def device(self) -> torch.device:
@@ -728,8 +730,12 @@ class MSEncoder(pl.LightningModule):
         # Record train loss for plotting (may be nan)
         try:
             self._plot_train_losses.append(metrics.get("train_total", float('nan')))
+            self._plot_train_ce_losses.append(metrics.get("train_ce", float('nan')))
+            self._plot_train_mse_losses.append(metrics.get("train_mse", float('nan')))
         except Exception:
             self._plot_train_losses.append(float('nan'))
+            self._plot_train_ce_losses.append(float('nan'))
+            self._plot_train_mse_losses.append(float('nan'))
         self._log_history()
         # Update plots
         try:
@@ -802,6 +808,7 @@ class MSEncoder(pl.LightningModule):
             if len(self._plot_train_losses) == 0 and len(self._plot_val_losses) == 0:
                 return
 
+            # Plot 1: Total Loss (existing)
             plt.figure(figsize=(10, 6))
             epochs = range(1, len(self._plot_train_losses) + 1)
             if len(self._plot_train_losses) > 0:
@@ -821,6 +828,33 @@ class MSEncoder(pl.LightningModule):
             os.makedirs('logs', exist_ok=True)
             plt.savefig(os.path.join('logs', 'loss_curves_mse.png'))
             plt.close()
+            
+            # Plot 2: CE Loss only
+            if len(self._plot_train_ce_losses) > 0:
+                plt.figure(figsize=(10, 6))
+                epochs = range(1, len(self._plot_train_ce_losses) + 1)
+                plt.plot(epochs, self._plot_train_ce_losses, 'g-', label='Train CE Loss', linewidth=2)
+                plt.title('Cross-Entropy Loss During Training')
+                plt.xlabel('Epoch')
+                plt.ylabel('CE Loss')
+                plt.legend()
+                plt.grid(True)
+                plt.savefig(os.path.join('logs', 'ce_loss_curve.png'))
+                plt.close()
+            
+            # Plot 3: Total Loss only
+            if len(self._plot_train_losses) > 0:
+                plt.figure(figsize=(10, 6))
+                epochs = range(1, len(self._plot_train_losses) + 1)
+                plt.plot(epochs, self._plot_train_losses, 'b-', label='Train Total Loss', linewidth=2)
+                plt.title('Total Loss During Training')
+                plt.xlabel('Epoch')
+                plt.ylabel('Total Loss')
+                plt.legend()
+                plt.grid(True)
+                plt.savefig(os.path.join('logs', 'total_loss_curve.png'))
+                plt.close()
+                
         except Exception as e:
             logger.warning(f"Failed to create loss curve plot: {e}")
 
